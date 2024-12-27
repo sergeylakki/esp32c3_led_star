@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Шпаргалка по управлению светодиодами</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        pre {
+            background-color: #ecf0f1;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        code {
+            color: #e74c3c;
+        }
+        .keyword {
+            color: #2980b9; /* Цвет для ключевых слов */
+            font-weight: bold;
+        }
+        .string {
+            color: #27ae60; /* Цвет для строк */
+        }
+        .comment {
+            color: #95a5a6; /* Цвет для комментариев */
+            font-style: italic;
+        }
+        .note {
+            background-color: #dff0d8;
+            border-left: 5px solid #3c763d;
+            padding: 10px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Шпаргалка по управлению светодиодами с Adafruit NeoPixel</h1>
+
+<h2>Подключение библиотеки</h2>
+<pre><code class="keyword">#include</code> <span class="string">&lt;Adafruit_NeoPixel.h&gt;</span></pre>
+<p>Подключаем библиотеку для работы с адресуемыми светодиодами.</p>
+
+<h2>Определение переменных</h2>
+<pre><code>
+<span class="keyword">#define</span> LED_PIN 6          <span class="comment">// Пин для подключения светодиодов</span>
+<span class="keyword">#define</span> BUT_PIN 10         <span class="comment">// Пин для подключения кнопки</span>
+<span class="keyword">#define</span> NUMPIXELS 12       <span class="comment">// Количество светодиодов</span>
+
+Adafruit_NeoPixel pixels(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800); <span class="comment">// Создаем объект для управления светодиодами</span>
+
+int type = 0;  <span class="comment">// Режим работы</span>
+</code></pre>
+<p>Здесь мы определяем пины, количество светодиодов и создаем объект для управления ими.</p>
+
+<h2>Функция обработки кнопки</h2>
+<pre><code>
+<span class="keyword">void</span> but() {
+    type++;   <span class="comment">// Включаем следующий режим</span>
+    <span class="keyword">if</span> (type > 2) type = 0; <span class="comment">// Если номер режима больше количества</span>
+}
+</code></pre>
+<p>Эта функция переключает режимы при нажатии кнопки.</p>
+
+<h2>Функция <code>setup()</code></h2>
+<pre><code>
+<span class="keyword">void</span> setup() {
+    pixels.begin(); <span class="comment">// Инициализация светодиодов</span>
+    attachInterrupt(BUT_PIN, but, RISING); <span class="comment">// Подключаем кнопку к 10 порту</span>
+}
+</code></pre>
+<p>В функции <code>setup()</code> мы инициализируем светодиоды и настраиваем прерывание для кнопки.</p>
+
+<h2>Функция <code>loop()</code></h2>
+<pre><code>
+<span class="keyword">void</span> loop() {
+    <span class="keyword">if</span> (type == 0) pixels.clear(); <span class="comment">// Выключение светодиодов</span>
+    <span class="keyword">if</span> (type == 1) fillCircle(); <span class="comment">// Заполнение круга</span>
+    <span class="keyword">if</span> (type == 2) wave(255, 0, 0); <span class="comment">// Бегущая волна</span>
+}
+</code></pre>
+<p>В функции <code>loop()</code> мы проверяем текущий режим и выполняем соответствующее действие.</p>
+
+<h2>Функция <code>wave()</code></h2>
+<pre><code>
+<span class="keyword">void</span> wave(byte r, byte g, byte b) {
+    <span class="keyword">static</span> int pos = 0; <span class="comment">// Позиция волны</span>
+    <span class="keyword">for</span> (int i = 0; i < NUMPIXELS; i++) {
+        pixels.setPixelColor(i, pixels.Color(r * (sin(i + pos) / 2 + 0.5), g * (sin(i + pos) / 2 + 0.5), b * (sin(i + pos) / 2 + 0.5))); <span class="comment">// Устанавливаем цвет</span>
+    }
+    pixels.show(); <span class="comment">// Записываем значения в светодиоды</span>
+    pos++; <span class="comment">// Увеличиваем позицию</span>
+    delay(50); <span class="comment">// Пауза</span>
+}
+</code></pre>
+<p>Функция <code>wave()</code> создает эффект бегущей волны с использованием синусоиды для плавного изменения цвета.</p>
+
+<h2>Функция <code>fillCircle()</code></h2>
+<pre><code>
+<span class="keyword">void</span> fillCircle() {
+    <span class="keyword">static</span> int pos = 0; <span class="comment">// Позиция</span>
+    pixels.clear(); <span class="comment">// Обнуляем значения всех светодиодов</span>
+    <span class="keyword">for</span> (int i = 0; i <= pos; i++) {
+        pixels.setPixelColor(i, pixels.Color(255, 255, 255)); <span class="comment">// Белый цвет</span>
+        pixels.setPixelColor(NUMPIXELS - 1 - i, pixels.Color(255, 255, 255)); <span class="comment">// Заполнение с другой стороны</span>
+    }
+    pixels.show(); <span class="comment">// Записываем данные в светодиоды</span>
+    pos = (pos + 1) % (NUMPIXELS / 2); <span class="comment">// Увеличиваем позицию</span>
+    delay(150); <span class="comment">// Задержка для эффекта</span>
+}
+</code></pre>
+<p>Функция <code>fillCircle()</code> заполняет светодиоды белым цветом с обеих сторон, создавая эффект круга.</p>
+
+<h2>Циклы и условия</h2>
+<p>Циклы и условия являются основными конструкциями в программировании, позволяющими повторять действия и проверять условия.</p>
+
+<h3>Циклы</h3>
+<p>Циклы используются для выполнения одного и того же кода несколько раз. В нашем примере мы используем цикл <code>for</code> для перебора всех светодиодов:</p>
+<pre><code>
+<span class="keyword">for</span> (int i = 0; i < NUMPIXELS; i++) {
+    <span class="comment">// Код для управления каждым светодиодом</span>
+}
+</code></pre>
+<p>В этом цикле переменная <code>i</code> принимает значения от 0 до <code>NUMPIXELS - 1</code>, что позволяет управлять каждым светодиодом.</p>
+
+<h3>Условия</h3>
+<p>Условия позволяют выполнять разные действия в зависимости от значений переменных. Например:</p>
+<pre><code>
+<span class="keyword">if</span> (type == 0) {
+    <span class="comment">// Код для режима 0</span>
+} <span class="keyword">else if</span> (type == 1) {
+    <span class="comment">// Код для режима 1</span>
+}
+</code></pre>
+<p>В этом примере, в зависимости от значения <code>type</code>, выполняется соответствующий код.</p>
+
+<h2>Примеры написания собственных программ</h2>
+<p>Теперь, когда вы знаете, как использовать циклы и условия, попробуйте написать свои собственные программы. Вот несколько идей:</p>
+<ul>
+    <li><strong>Цветной цикл:</strong> Создайте программу, которая будет последовательно зажигать светодиоды разными цветами.</li>
+    <li><strong>Мигающий эффект:</strong> Напишите код, который будет включать и выключать светодиоды с определенной задержкой.</li>
+    <li><strong>Рандомный цвет:</strong> Создайте программу, которая будет случайным образом выбирать цвет для каждого светодиода.</li>
+</ul>
+
+<h2>Запуск программы</h2>
+<p>Чтобы запустить программу, выполните следующие шаги:</p>
+<ol>
+    <li>Подключите светодиоды и кнопку к Arduino согласно схеме.</li>
+    <li>Скачайте и установите библиотеку Adafruit NeoPixel через Library Manager в Arduino IDE.</li>
+    <li>Скопируйте код в Arduino IDE.</li>
+    <li>Загрузите код на вашу плату Arduino.</li>
+</ol>
+</body>
+</html>
